@@ -1,0 +1,8 @@
+.idea
+*.iml
+cloudera-client/cloudera-dist
+cloudera-client/cloudera-conf
+.DS_Store
+airflow-miniconda/LICENSE
+dataeng-airflow-miniconda/LICENSE
+dataeng-spark/LICENSE

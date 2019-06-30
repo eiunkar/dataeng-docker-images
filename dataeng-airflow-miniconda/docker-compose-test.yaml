@@ -1,0 +1,31 @@
+version: '2.1'
+services:
+  postgres:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    #    For direct port access uncomment ports section and set your port
+    ports:
+      - "10001:5432"
+
+  webserver:
+    image: eiunkar/dataeng-airflow-miniconda:1.10.2
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - LOAD_EX=n
+      - EXECUTOR=Local
+    ports:
+      - "8080:8080"
+    #    For a long running stack use command below
+    #    command: webserver
+    #    For integration tests use command below
+    command: runtest
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
