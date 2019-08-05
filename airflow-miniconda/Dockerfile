@@ -5,7 +5,7 @@ ENV TERM linux
 
 # Airflow
 ARG AIRFLOW_VERSION=1.10.2
-ARG AIRFLOW_HOME=/usr/local/airflow
+ARG AIRFLOW_HOME=/root/airflow
 ARG AIRFLOW_DEPS=""
 ARG PYTHON_DEPS=""
 ENV AIRFLOW_GPL_UNIDECODE yes
@@ -18,6 +18,8 @@ ENV LC_CTYPE en_US.UTF-8
 ENV LC_MESSAGES en_US.UTF-8
 
 COPY LICENSE /LICENSE
+
+RUN conda install python=3.6
 
 RUN set -ex \
     && buildDeps=' \
@@ -44,8 +46,7 @@ RUN set -ex \
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
-    && useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
-    && pip install -U pip setuptools wheel \
+    && pip install pip setuptools wheel \
     && pip install pytz \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
@@ -60,11 +61,10 @@ RUN set -ex \
 COPY script/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 
-RUN chown -R airflow: ${AIRFLOW_HOME}
+RUN chmod 777 /entrypoint.sh
 
 EXPOSE 8080 5555 8793
 
-USER airflow
 WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["webserver"] # set default arg for entrypoint
+CMD ["webserver"]
