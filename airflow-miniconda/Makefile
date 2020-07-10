@@ -25,7 +25,7 @@ help:
 # Conda Enviroment
 ###################
 
-IMAGE_NAME := eiunkar/airflow-miniconda
+IMAGE_NAME := nyer-airflow-miniconda
 IMAGE_TAG := 1.10.2
 
 .PHONY: build

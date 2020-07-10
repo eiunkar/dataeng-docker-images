@@ -1,0 +1,48 @@
+pipeline {
+
+    agent any
+    environment {
+        NY_DOCKER_REGISTRY = "registry-ds.newyorker.de:8443"
+    }
+    stages {
+
+        stage('Prepare') {
+            steps {
+                slackSend color: "warning", message: "Started: ${env.JOB_NAME} - ${env.BUILD_NUMBER} (<${env.BUILD_URL}console|Open>)"
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh "make build"
+            }
+        }
+
+        stage('Push') {
+            when {
+                expression {
+                    env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'test' || env.BRANCH_NAME == 'production'
+                }
+            }
+            steps {
+                script {
+                    docker.withRegistry("https://${env.NY_DOCKER_REGISTRY}", 'nexus_docker_credentials') {
+                        sh "make push"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            sh "echo succes!!!"
+            slackSend color: "good", message: "Success: ${env.JOB_NAME} ${env.JOB_NAME} - ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) "
+        }
+
+        failure {
+            slackSend color: "bad", message: "Failure: ${env.JOB_NAME} - ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+    }
+
+
+}
