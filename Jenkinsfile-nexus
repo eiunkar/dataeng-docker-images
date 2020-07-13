@@ -15,7 +15,7 @@ pipeline {
         stage('Build nyer-airflow-miniconda') {
             steps {
                 dir('airflow-miniconda'){
-                    sh "./make build"
+                    sh "make build"
                 }
             }
         }
@@ -30,7 +30,7 @@ pipeline {
                 dir('airflow-miniconda'){
                     script {
                         docker.withRegistry("https://${env.NY_DOCKER_REGISTRY}", 'nexus_docker_credentials') {
-                            sh "./make push"
+                            sh "make push"
                         }
                     }
                 }
