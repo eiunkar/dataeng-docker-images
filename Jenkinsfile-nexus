@@ -36,6 +36,31 @@ pipeline {
                 }
             }
         }
+
+        stage('Build nyer-dataeng-airflow-miniconda') {
+            steps {
+                dir('dataeng-airflow-miniconda'){
+                    sh "make build"
+                }
+            }
+        }
+
+        stage('Push nyer-dataeng-airflow-miniconda') {
+            when {
+                expression {
+                    env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'test' || env.BRANCH_NAME == 'production'
+                }
+            }
+            steps {
+                dir('dataeng-airflow-miniconda'){
+                    script {
+                        docker.withRegistry("https://${env.NY_DOCKER_REGISTRY}", 'nexus_docker_credentials') {
+                            sh "make push"
+                        }
+                    }
+                }
+            }
+        }
     }
     post {
         success {
