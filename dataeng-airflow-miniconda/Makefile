@@ -25,7 +25,7 @@ help:
 # Conda Enviroment
 ###################
 
-IMAGE_NAME := nyer-dataeng-airflow-miniconda
+IMAGE_NAME := registry-ds.newyorker.de:8443/nyer-dataeng-airflow-miniconda
 IMAGE_TAG := 1.10.2
 
 .PHONY: build

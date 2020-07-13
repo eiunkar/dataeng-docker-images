@@ -1,4 +1,4 @@
-FROM nyer-airflow-miniconda:1.10.2
+FROM registry-ds.newyorker.de:8443/nyer-airflow-miniconda:1.10.2
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
