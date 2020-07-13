@@ -12,13 +12,13 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build nyer-airflow-miniconda') {
             steps {
-                sh "make build"
+                sh "airflow-miniconda/make build"
             }
         }
 
-        stage('Push') {
+        stage('Push nyer-airflow-miniconda') {
             when {
                 expression {
                     env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'test' || env.BRANCH_NAME == 'production'
@@ -27,7 +27,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${env.NY_DOCKER_REGISTRY}", 'nexus_docker_credentials') {
-                        sh "make push"
+                        sh "airflow-miniconda/make push"
                     }
                 }
             }
