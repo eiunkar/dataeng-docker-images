@@ -1,4 +1,4 @@
-FROM eiunkar/airflow-miniconda:1.10.2
+FROM nyer-airflow-miniconda:1.10.2
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
