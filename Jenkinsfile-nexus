@@ -1,8 +1,51 @@
-pipeline {
+NY_DOCKER_REGISTRY = "registry-ds.newyorker.de:8443"
+def IMAGES = [
+  "nyer-airflow-miniconda": [
+      "image_name": "${NY_DOCKER_REGISTRY}/nyer-airflow-miniconda",
+      "image_tag": "1.10.2",
+      "build_context": "./airflow-miniconda",
+      "dockerfile": "./airflow-miniconda/Dockerfile",
+  ],
+  "nyer-dataeng-airflow-miniconda": [
+      "image_name": "${NY_DOCKER_REGISTRY}/nyer-dataeng-airflow-miniconda",
+      "image_tag": "1.10.2",
+      "build_context": "./airflow-miniconda",
+      "dockerfile": "./airflow-miniconda/Dockerfile",
+  ],
+]
+def PUSHTAGS = []
+for (def key in IMAGES.keySet()) {
+  PUSHTAGS.add("${IMAGES[key]["image_name"]}:${IMAGES[key]["image_tag"]}")
+}
 
-    agent any
+def createDockerBuild(docker){
+    container('dind') {
+        sh """
+            cp LICENSE ${docker["build_context"]}
+            docker build \
+                -t ${docker["image_name"]}:${docker["image_tag"]} \
+                -f ${docker["dockerfile"]} ${docker["build_context"]}
+        """
+    }
+
+}
+
+def pushImages(tags) {
+    for (int i = 0; i < tags.size(); i++) {
+      sh "docker push ${NY_DOCKER_REGISTRY}/${tags[i]}"
+    }
+}
+
+pipeline {
+    agent {
+        kubernetes {
+            cloud 'k8s-dev'
+            yamlFile 'ci/jenkinsPod.yaml'
+        }
+    }
     environment {
-        NY_DOCKER_REGISTRY = "registry-ds.newyorker.de:8443"
+        REGISTRY_CREDENTIALS = "nexus_docker_k8s_credentials"
+        PUSH_IMAGES = "${env.BRANCH_NAME ==~ /production|master|test/ ? "true" : "false" }"
     }
     stages {
 
@@ -14,60 +57,35 @@ pipeline {
 
         stage('Build nyer-airflow-miniconda') {
             steps {
-                dir('airflow-miniconda'){
-                    sh "make build"
+                script{
+                    createDockerBuild(IMAGES["nyer-airflow-miniconda"])
                 }
             }
         }
-
-        stage('Push nyer-airflow-miniconda') {
-            when {
-                expression {
-                    env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'test' || env.BRANCH_NAME == 'production'
-                }
-            }
-            steps {
-                dir('airflow-miniconda'){
-                    script {
-                        docker.withRegistry("https://${env.NY_DOCKER_REGISTRY}", 'nexus_docker_credentials') {
-                            sh "make push"
-                        }
-                    }
-                }
-            }
-        }
-
         stage('Build nyer-dataeng-airflow-miniconda') {
             steps {
-                dir('dataeng-airflow-miniconda'){
-                    sh "make build"
+                script{
+                    createDockerBuild(IMAGES["nyer-dataeng-airflow-miniconda"])
                 }
             }
         }
-
-        stage('Push nyer-dataeng-airflow-miniconda') {
-            when {
-                expression {
-                    env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'test' || env.BRANCH_NAME == 'production'
-                }
-            }
+        stage('Push nyer-airflow-miniconda') {
+            when {environment name: 'PUSH_IMAGES', value: 'true'}
             steps {
-                dir('dataeng-airflow-miniconda'){
-                    script {
-                        docker.withRegistry("https://${env.NY_DOCKER_REGISTRY}", 'nexus_docker_credentials') {
-                            sh "make push"
+                    container('dind'){
+                        script {
+                            docker.withRegistry("https://${NY_DOCKER_REGISTRY}", "${REGISTRY_CREDENTIALS}") {
+                                pushImages(PUSHTAGS)
+                            }
                         }
                     }
                 }
-            }
         }
     }
     post {
         success {
-            sh "echo succes!!!"
-            slackSend color: "good", message: "Success: ${env.JOB_NAME} ${env.JOB_NAME} - ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) "
+            slackSend color: "good", message: "Success: ${env.JOB_NAME} - ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
-
         failure {
             slackSend color: "bad", message: "Failure: ${env.JOB_NAME} - ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
