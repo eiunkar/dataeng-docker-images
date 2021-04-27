@@ -9,8 +9,8 @@ def IMAGES = [
   "nyer-dataeng-airflow-miniconda": [
       "image_name": "${NY_DOCKER_REGISTRY}/nyer-dataeng-airflow-miniconda",
       "image_tag": "1.10.2",
-      "build_context": "./airflow-miniconda",
-      "dockerfile": "./airflow-miniconda/Dockerfile",
+      "build_context": "./dataeng-airflow-miniconda",
+      "dockerfile": "./dataeng-airflow-miniconda/Dockerfile",
   ],
 ]
 def PUSHTAGS = []
