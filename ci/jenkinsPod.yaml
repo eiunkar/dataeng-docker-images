@@ -10,6 +10,8 @@ spec:
     env:
     - name: DOCKER_HOST
       value: tcp://localhost:2375
+    args:
+      - "--mtu=1400"
     securityContext:
       privileged: true
     volumeMounts:
